@@ -1,3 +1,4 @@
+import { encode } from "cbor-x";
 export {};
 
 declare global {
@@ -38,35 +39,44 @@ XMLHttpRequest.prototype.send = function (
                         try {
                             const response = JSON.parse(this.responseText);
                             if (response && response.data && response.data.downloadPath) {
-                                const syncXhr = new XMLHttpRequest();
-                                syncXhr.open(
-                                    "POST",
-                                    "http://localhost:1027/download-from-hui",
-                                    false, // synchronous
-                                );
-                                syncXhr.setRequestHeader("Content-Type", "application/json");
                                 try {
-                                    syncXhr.send(
-                                        JSON.stringify({
-                                            title: response.data.name,
-                                            fileUrl: response.data.downloadPath,
-                                        }),
-                                    );
-                                    if (syncXhr.status >= 200 && syncXhr.status < 300) {
-                                        Object.defineProperty(this, "status", { get: () => 0 });
-                                        Object.defineProperty(this, "statusText", {
-                                            get: () => "Intercepted by local server",
-                                        });
-                                        Object.defineProperty(this, "responseText", {
-                                            get: () => "",
-                                        });
-                                        Object.defineProperty(this, "response", {
-                                            get: () => null,
-                                        });
-                                    }
+                                    const ws = new WebSocket("ws://localhost:1027/ws");
+
+                                    ws.onopen = () => {
+                                        ws.send(
+                                            encode({
+                                                type: "hui",
+                                                title: response.data.name,
+                                                fileUrl: response.data.downloadPath,
+                                            }),
+                                        );
+                                    };
+
+                                    ws.onmessage = (event) => {
+                                        if (event.data === "download started") {
+                                            Object.defineProperty(this, "status", { get: () => 0 });
+                                            Object.defineProperty(this, "statusText", {
+                                                get: () => "Intercepted by local server",
+                                            });
+                                            Object.defineProperty(this, "responseText", {
+                                                get: () => "",
+                                            });
+                                            Object.defineProperty(this, "response", {
+                                                get: () => null,
+                                            });
+                                            ws.close();
+                                        } else if (event.data === "invalid data") {
+                                            ws.close();
+                                        }
+                                    };
+
+                                    ws.onerror = (err) => {
+                                        console.error("websocket error:", err);
+                                        ws.close();
+                                    };
                                 } catch (err) {
                                     console.error(
-                                        "local server post failed, proceeding with original request:",
+                                        "local server websocket failed, proceeding with original request:",
                                         err,
                                     );
                                 }

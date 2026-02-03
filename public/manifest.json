@@ -1,9 +1,11 @@
 {
     "name": "Nahida Extension",
     "description": "나히다 데스크탑과 연결해 사용할 수 있는 확장 프로그램",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "manifest_version": 3,
-    "permissions": ["scripting"],
+    "permissions": [
+        "scripting"
+    ],
     "host_permissions": [
         "https://gamebanana.com/*",
         "https://*.gamebanana.com/*",
@@ -13,13 +15,22 @@
     ],
     "content_scripts": [
         {
-            "matches": ["https://gamebanana.com/*", "https://*.gamebanana.com/*"],
-            "js": ["src/content/content.js"],
+            "matches": [
+                "https://gamebanana.com/*",
+                "https://*.gamebanana.com/*"
+            ],
+            "js": [
+                "src/content/content.js"
+            ],
             "run_at": "document_idle"
         },
         {
-            "matches": ["http://174.136.207.5/*"],
-            "js": ["src/content/xhr-interceptor.js"],
+            "matches": [
+                "http://174.136.207.5/*"
+            ],
+            "js": [
+                "src/content/xhr-interceptor.js"
+            ],
             "run_at": "document_start",
             "world": "MAIN"
         }

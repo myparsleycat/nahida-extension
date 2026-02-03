@@ -1,4 +1,5 @@
 import ky from "ky";
+import { encode } from "cbor-x";
 
 interface DownloadPayload {
     title: string;
@@ -21,11 +22,32 @@ class PageMetadata {
 
 class DownloadClient {
     static async send(payload: DownloadPayload) {
-        await ky.post("http://localhost:1027/download-from-gb", {
-            json: payload,
-            retry: { limit: 0 },
-            timeout: 1500,
-        });
+        const ws = new WebSocket("ws://localhost:1027/ws");
+
+        const data = {
+            type: "gb",
+            ...payload,
+        };
+
+        ws.onopen = () => {
+            ws.send(encode(data));
+        };
+
+        ws.onmessage = (event) => {
+            if (event.data === "invalid data") {
+                const err = new Error("desktop app received invalid data");
+                console.error(err);
+                ws.close();
+                throw err;
+            } else if (event.data === "download started") {
+                ws.close();
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error("websocket error:", error);
+            throw error;
+        };
     }
 }
 

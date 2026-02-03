@@ -1,9 +1,7 @@
 import { initDownloadManager } from "./features/download-manager";
-import { initModManager } from "./features/mod-manager";
 
 function initializePage() {
     initDownloadManager();
-    initModManager();
 }
 
 function setupNavigationListener() {
