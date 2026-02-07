@@ -6,10 +6,10 @@ export default defineConfig({
         outDir: "dist",
         emptyOutDir: false,
         lib: {
-            entry: resolve(__dirname, "src/content/xhr-interceptor.ts"),
+            entry: resolve(__dirname, "src/content/hui/xhr.ts"),
             formats: ["iife"],
             name: "HookContent",
-            fileName: () => "src/content/xhr-interceptor.js",
+            fileName: () => "src/content/hui/xhr.js",
         },
         rollupOptions: {
             output: {

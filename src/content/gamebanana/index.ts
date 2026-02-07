@@ -1,4 +1,4 @@
-import { initDownloadManager } from "./features/download-manager";
+import { initDownloadManager } from "./download";
 
 function initializePage() {
     initDownloadManager();

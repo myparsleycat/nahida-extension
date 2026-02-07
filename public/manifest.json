@@ -11,7 +11,8 @@
         "https://*.gamebanana.com/*",
         "https://api.nahida.live/*",
         "http://localhost:1027/*",
-        "http://174.136.207.5/*"
+        "http://174.136.207.5/*",
+        "https://cloudreve.huihui123.org/*"
     ],
     "content_scripts": [
         {
@@ -20,16 +21,17 @@
                 "https://*.gamebanana.com/*"
             ],
             "js": [
-                "src/content/content.js"
+                "src/content/gamebanana/index.js"
             ],
             "run_at": "document_idle"
         },
         {
             "matches": [
-                "http://174.136.207.5/*"
+                "http://174.136.207.5/*",
+                "https://cloudreve.huihui123.org/*"
             ],
             "js": [
-                "src/content/xhr-interceptor.js"
+                "src/content/hui/xhr.js"
             ],
             "run_at": "document_start",
             "world": "MAIN"

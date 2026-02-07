@@ -1,4 +1,3 @@
-import ky from "ky";
 import { encode } from "cbor-x";
 
 interface DownloadPayload {

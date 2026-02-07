@@ -6,10 +6,10 @@ export default defineConfig({
         outDir: "dist",
         emptyOutDir: false,
         lib: {
-            entry: resolve(__dirname, "src/content/content.ts"),
+            entry: resolve(__dirname, "src/content/gamebanana/index.ts"),
             formats: ["iife"],
             name: "GameBananaEnhancedContent",
-            fileName: () => "src/content/content.js",
+            fileName: () => "src/content/gamebanana/index.js",
         },
         rollupOptions: {
             output: {
