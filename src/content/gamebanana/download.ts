@@ -21,32 +21,64 @@ class PageMetadata {
 
 class DownloadClient {
     static async send(payload: DownloadPayload) {
-        const ws = new WebSocket("ws://localhost:1027/ws");
+        return await new Promise<void>((resolve, reject) => {
+            const ws = new WebSocket("ws://localhost:1027/ws");
+            const data = {
+                type: "gb",
+                ...payload,
+            };
 
-        const data = {
-            type: "gb",
-            ...payload,
-        };
+            let settled = false;
+            let connected = false;
 
-        ws.onopen = () => {
-            ws.send(encode(data));
-        };
+            const cleanup = () => {
+                ws.onopen = null;
+                ws.onmessage = null;
+                ws.onerror = null;
+                ws.onclose = null;
+            };
 
-        ws.onmessage = (event) => {
-            if (event.data === "invalid data") {
-                const err = new Error("desktop app received invalid data");
-                console.error(err);
+            const settleSuccess = () => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                resolve();
+            };
+
+            const settleFailure = (error: Error) => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                reject(error);
+            };
+
+            ws.onopen = () => {
+                connected = true;
+                ws.send(encode(data));
                 ws.close();
-                throw err;
-            } else if (event.data === "download started") {
-                ws.close();
-            }
-        };
+                settleSuccess();
+            };
 
-        ws.onerror = (error) => {
-            console.error("websocket error:", error);
-            throw error;
-        };
+            ws.onmessage = (event) => {
+                if (event.data === "invalid data") {
+                    const err = new Error("desktop app received invalid data");
+                    console.error(err);
+                    ws.close();
+                    settleFailure(err);
+                }
+            };
+
+            ws.onerror = () => {
+                console.error("websocket error");
+                settleFailure(new Error("websocket connection failed"));
+            };
+
+            ws.onclose = () => {
+                if (!connected) {
+                    settleFailure(new Error("websocket closed before connection opened"));
+                }
+            };
+        });
     }
 }
 
