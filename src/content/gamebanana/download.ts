@@ -86,79 +86,45 @@ class DownloadActionHandler {
 
 class ElementScanner {
     static scanAndHook() {
-        const filesContainers = [
-            document.querySelector("ul.Flow.Files"),
-            document.querySelector("ul.Flow.ArchivedFiles"),
-        ];
+        const downloadLinks = document.querySelectorAll('a[href^="https://gamebanana.com/dl/"]');
 
-        let totalButtons = 0;
-
-        filesContainers.forEach((container) => {
-            if (!container) return;
-
-            const downloadButtons = container.querySelectorAll("a.DownloadLink");
-            downloadButtons.forEach((button) => {
-                if (button instanceof HTMLAnchorElement) {
-                    DownloadActionHandler.attachListener(button);
-                }
-            });
-            totalButtons += downloadButtons.length;
+        downloadLinks.forEach((button) => {
+            if (button instanceof HTMLAnchorElement) {
+                DownloadActionHandler.attachListener(button);
+            }
         });
 
-        return totalButtons;
+        return downloadLinks.length;
     }
 }
 
 class PageObserver {
     static init() {
-        this.observeFileContainers();
-        this.observeParentContainer();
-    }
+        const root = document.body;
+        if (!root || root.dataset.gbObserved === "true") return;
 
-    private static observeFileContainers() {
-        const containers = [
-            document.querySelector("ul.Flow.Files"),
-            document.querySelector("ul.Flow.ArchivedFiles"),
-        ];
+        root.dataset.gbObserved = "true";
 
-        containers.forEach((element) => {
-            if (!element) return;
+        const observer = new MutationObserver((mutations) => {
+            let hasNewButtons = false;
 
-            const observer = new MutationObserver((mutations) => {
-                let hasNewButtons = false;
-                mutations.forEach((mutation) => {
-                    mutation.addedNodes.forEach((node) => {
-                        if (node instanceof HTMLElement) {
-                            if (
-                                node.matches("a.DownloadLink") ||
-                                node.querySelectorAll("a.DownloadLink").length > 0
-                            ) {
-                                hasNewButtons = true;
-                            }
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node instanceof HTMLElement) {
+                        if (
+                            node.matches('a[href^="https://gamebanana.com/dl/"]') ||
+                            node.querySelector('a[href^="https://gamebanana.com/dl/"]')
+                        ) {
+                            hasNewButtons = true;
                         }
-                    });
+                    }
                 });
-
-                if (hasNewButtons) ElementScanner.scanAndHook();
             });
 
-            observer.observe(element, { childList: true, subtree: true });
+            if (hasNewButtons) ElementScanner.scanAndHook();
         });
-    }
 
-    private static observeParentContainer() {
-        const parentContainer = document.querySelector("div.Files, div#Content");
-        if (parentContainer) {
-            const parentObserver = new MutationObserver(() => {
-                const archivedFiles = document.querySelector("ul.Flow.ArchivedFiles");
-                if (archivedFiles instanceof HTMLElement && !archivedFiles.dataset.gbObserved) {
-                    archivedFiles.dataset.gbObserved = "true";
-                    this.init();
-                }
-            });
-
-            parentObserver.observe(parentContainer, { childList: true, subtree: true });
-        }
+        observer.observe(root, { childList: true, subtree: true });
     }
 }
 
