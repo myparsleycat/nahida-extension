@@ -1,7 +1,7 @@
 {
     "name": "Nahida Extension",
     "description": "나히다 데스크탑과 연결해 사용할 수 있는 확장 프로그램",
-    "version": "2.0.0",
+    "version": "3.0.1",
     "manifest_version": 3,
     "permissions": [
         "scripting"
