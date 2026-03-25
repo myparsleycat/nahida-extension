@@ -1,25 +1,68 @@
 name: build
 
 on:
-  push:
+  pull_request:
+    types:
+      - closed
     branches:
       - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: 20
+          cache: pnpm
 
-      - name: Install Dependencies
-        run: npm install
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Build Extension
-        run: npm run build
+      - name: Build
+        run: pnpm run build
+
+      - name: Read version
+        id: version
+        run: echo "value=v$(node -p 'require(\"./package.json\").version')" >> "$GITHUB_OUTPUT"
+
+      - name: Create dist.zip
+        run: zip -r dist.zip dist
+
+      - name: Create tag
+        env:
+          TAG_NAME: ${{ steps.version.outputs.value }}
+        run: |
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Tag $TAG_NAME already exists" >&2
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG_NAME"
+          git push origin "$TAG_NAME"
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.value }}
+          files: dist.zip
+          overwrite_files: true
